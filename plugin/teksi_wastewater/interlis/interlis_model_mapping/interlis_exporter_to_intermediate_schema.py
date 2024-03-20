@@ -683,14 +683,13 @@ class InterlisExporterToIntermediateSchema:
 
     def _export_infrastrukturhaltung(self):
         query = self.tww_session.query(self.model_classes_tww_ag6496.gephaltung)
-        if self.filtered:
-            query = query.join(self.model_classes_tww_ag6496.wastewater_networkelement).filter(
-                self.model_classes_tww_ag6496.wastewater_networkelement.obj_id.in_(self.subset_ids)
-            )
         for row in query:
             gephaltung = self.model_classes_interlis.haltung(
                 **self.haltung_common_ag_xx(row),
-                lichte_breite=row.lichte_breite_ist, # this should only be row.lichte_breite...
+                t_ili_tid= row.obj_id,
+                t_id= self.get_tid(row),
+                lichte_breite=row.lichte_breite_ist,
+                
             )
             self.abwasser_session.add(gephaltung)
             print(".", end="")
