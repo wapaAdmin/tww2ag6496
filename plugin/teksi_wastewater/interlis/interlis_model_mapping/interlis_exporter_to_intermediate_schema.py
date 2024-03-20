@@ -687,10 +687,10 @@ class InterlisExporterToIntermediateSchema:
         for row in query:
             gephaltung = self.model_classes_interlis.haltung(
                 **self.haltung_common_ag_xx(row),
+                obj_id= row.obj_id,
                 t_ili_tid= row.obj_id,
                 t_id= self.get_tid(row),
                 lichte_breite=row.lichte_breite_ist,
-                
             )
             self.abwasser_session.add(gephaltung)
             print(".", end="")
