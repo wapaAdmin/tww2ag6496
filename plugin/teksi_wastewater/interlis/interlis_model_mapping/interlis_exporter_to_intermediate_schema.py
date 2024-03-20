@@ -471,6 +471,10 @@ class InterlisExporterToIntermediateSchema:
         logger.info("Exporting TWW.organisation -> ABWASSER.organisation")
         self._export_organisation()
         self._check_for_stop()
+
+        logger.info("Exporting TWW.gepknoten -> ABWASSER.infrastrukturknoten")
+        self._export_infrastrukturknoten()
+        self._check_for_stop()
         
         logger.info("Exporting TWW.gephaltung -> ABWASSER.infrastrukturhaltung")
         self._export_infrastrukturhaltung()
@@ -480,6 +484,10 @@ class InterlisExporterToIntermediateSchema:
         logger.info("Exporting TWW.organisation -> ABWASSER.organisation")
         self._export_organisation()
         self._check_for_stop()
+
+        logger.info("Exporting TWW.gepmassnahme -> ABWASSER.gepmassnahme")
+        self._export_gepmassnahme()
+        self._check_for_stop()
         
         logger.info("Exporting TWW.gepknoten -> ABWASSER.gepknoten")
         self._export_gepknoten()
@@ -487,6 +495,14 @@ class InterlisExporterToIntermediateSchema:
         
         logger.info("Exporting TWW.gephaltung -> ABWASSER.gephaltung")
         self._export_gephaltung()
+        self._check_for_stop()
+
+        logger.info("Exporting TWW.einzugsgebiet -> ABWASSER.einzugsgebiet")
+        self._export_einzugsgebiet()
+        self._check_for_stop()  
+
+        logger.info("Exporting TWW.bautenausserhalbbaugebiet -> ABWASSER.bautenausserhalbbaugebiet")
+        self._export_bautenausserhalbbaugebiet()
         self._check_for_stop()
         
         logger.info("Exporting TWW.ueberlauf_foerderaggregat -> ABWASSER.ueberlauf_foerderaggregat")
@@ -563,6 +579,34 @@ class InterlisExporterToIntermediateSchema:
         logger.info("done")
         self.abwasser_session.flush()
 
+    def _export_gepmassnahme(self):
+        query = self.tww_session.query(self.model_classes_tww_ag6496.gepmassnahme)
+        for row in query:
+            gepmassnahme = self.model_classes_interlis.gepmassnahme(
+                **self.gep_metainformation_common_ag_xx(row,'gepmassnahme'),
+                ausdehnung=row.ausdehnung,
+                beschreibung=self.truncate(self.emptystr_to_null(row.beschreibung), 100),
+                bezeichnung=self.truncate(self.emptystr_to_null(row.bezeichnung), 20),
+                datum_eingang=row.datum_eingang,
+                gesamtkosten=row.gesamtkosten,
+                handlungsbedarf=row.handlungsbedarf,
+                jahr_umsetzung_effektiv=row.jahr_umsetzung_effektiv,
+                jahr_umsetzung_geplant=row.jahr_umsetzung_planned,
+                kategorie=row.kategorie,
+                perimeter=row.perimeter,
+                prioritaetag=row.prioritaetag,
+                astatus=row.status,
+                symbolpos=row.symbolpos,
+                verweis=row.verweis,
+                traegerschaft=self.get_tid_by_obj_id(row.traegerschaft),
+                verantwortlich_ausloesung=self.get_tid_by_obj_id(row.verantwortlich_ausloesung),
+            )
+            self.map_tid_ag_xx(row.obj_id, gepmassnahme.t_id)
+            self.abwasser_session.add(gepmassnahme)
+            print(".", end="")
+        logger.info("done")
+        self.abwasser_session.flush()
+
     def _export_gepknoten(self):
         query = self.tww_session.query(self.model_classes_tww_ag6496.gepknoten)
         if self.filtered:
@@ -585,6 +629,29 @@ class InterlisExporterToIntermediateSchema:
                 istschnittstelle=row.istschnittstelle,
                 maxrueckstauhoehe=row.maxrueckstauhoehe,
                 gepmassnahmeref=self.get_tid_by_obj_id(row.gepmassnahmeref),
+            )
+            self.map_tid_ag_xx(row.obj_id, gepknoten.t_id)
+            self.abwasser_session.add(gepknoten)
+            print(".", end="")
+        logger.info("done")
+        self.abwasser_session.flush()
+
+    def _export_infrastrukturknoten(self):
+        query = self.tww_session.query(self.model_classes_tww_ag6496.gepknoten)
+
+        """
+        GEPKnoten werden nach Fläche sortiert hinzugefügt, damit bei der Triggerlogik
+        hinter {ext_schema}.gepknoten die Verknüpfung zu anderen Abwasserbauwerken 
+        basierend auf einem Spatial Join implementiert werden kann.
+        Dies ist relevant, da Zweitknoten der FunktionAG "andere", die innerhalb der Detailgeometrie
+        eines anderen Abwasserbauwerks liegen, als Deckel importiert werden.
+        """
+        query.order_by(nullslast(self.model_classes_tww_ag6496.gepknoten.detailgeometrie.ST_Area().asc()))
+        for row in query:
+            gepknoten = self.model_classes_interlis.abwasserbauwerk( #abwasserbauwerk wegen Kompatibiltät bei Label-Export
+                **self.knoten_common_ag_xx(row),
+                t_ili_tid= row.obj_id,
+                t_id= self.get_tid(row),
             )
             self.map_tid_ag_xx(row.obj_id, gepknoten.t_id)
             self.abwasser_session.add(gepknoten)
@@ -626,6 +693,75 @@ class InterlisExporterToIntermediateSchema:
                 lichte_breite=row.lichte_breite_ist, # this should only be row.lichte_breite...
             )
             self.abwasser_session.add(gephaltung)
+            print(".", end="")
+        logger.info("done")
+        self.abwasser_session.flush()
+
+    def _export_einzugsgebiet(self):
+        query = self.tww_session.query(self.model_classes_tww_ag6496.einzugsgebiet)
+        for row in query:
+            einzugsgebiet = self.model_classes_interlis.einzugsgebiet(
+                **self.gep_metainformation_common_ag_xx(row,'einzugsgebiet'),
+                abflussbegrenzung_geplant=row.abflussbegrenzung_geplant,
+                abflussbegrenzung_ist=row.abflussbegrenzung_ist,
+                abflussbeiwert_rw_geplant=row.abflussbeiwert_rw_geplant,
+                abflussbeiwert_rw_ist=row.abflussbeiwert_rw_ist,
+                abflussbeiwert_sw_geplant=row.abflussbeiwert_sw_geplant,
+                abflussbeiwert_sw_ist=row.abflussbeiwert_sw_ist,
+                befestigungsgrad_rw_geplant=row.befestigungsgrad_rw_geplant,
+                befestigungsgrad_rw_ist=row.befestigungsgrad_rw_ist,
+                befestigungsgrad_sw_geplant=row.befestigungsgrad_sw_geplant,
+                befestigungsgrad_sw_ist=row.befestigungsgrad_sw_ist,
+                bezeichnung=self.truncate(self.emptystr_to_null(row.bezeichnung), 20),
+                direkteinleitung_in_gewaesser_geplant=row.direkteinleitung_in_gewaesser_geplant,
+                direkteinleitung_in_gewaesser_ist=row.direkteinleitung_in_gewaesser_ist,
+                einwohnerdichte_geplant=row.einwohnerdichte_geplant,
+                einwohnerdichte_ist=row.einwohnerdichte_ist,
+                entwaesserungssystemag_geplant=row.entwaesserungssystemag_geplant,
+                entwaesserungssystemag_ist=row.entwaesserungssystemag_ist,
+                flaeche=row.flaeche,
+                fremdwasseranfall_geplant=row.fremdwasseranfall_geplant,
+                fremdwasseranfall_ist=row.fremdwasseranfall_ist,
+                perimeter=row.perimeter,
+                perimetertyp=row.perimetertyp,
+                retention_geplant=row.retention_geplant,
+                retention_ist="ja", # Change to row.retention_ist once the test data has been fixed
+                schmutzabwasseranfall_geplant=row.schmutzabwasseranfall_geplant,
+                schmutzabwasseranfall_ist=row.schmutzabwasseranfall_ist,
+                versickerung_geplant=row.versickerung_geplant,
+                versickerung_ist=row.versickerung_ist,
+                gepknoten_rw_geplantref=self.get_tid_by_obj_id(row.gepknoten_rw_geplantref),
+                gepknoten_rw_istref=self.get_tid_by_obj_id(row.gepknoten_rw_istref),
+                gepknoten_sw_geplantref=self.get_tid_by_obj_id(row.gepknoten_sw_geplantref),
+                gepknoten_sw_istref=self.get_tid_by_obj_id(row.gepknoten_sw_istref),
+            )
+            self.abwasser_session.add(einzugsgebiet)
+            print(".", end="")
+        logger.info("done")
+        self.abwasser_session.flush()
+
+    def _export_bautenausserhalbbaugebiet(self):
+        query = self.tww_session.query(self.model_classes_tww_ag6496.bautenausserhalbbaugebiet)
+        for row in query:
+            bautenausserhalbbaugebiet = self.model_classes_interlis.bautenausserhalbbaugebiet(
+                **self.gep_metainformation_common_ag_xx(row,'bautenausserhalbbaugebiet'),
+                anzstaendigeeinwohner=row.anzstaendigeeinwohner,
+                arealnutzung=row.arealnutzung,
+                beseitigung_haeusliches_abwasser=row.beseitigung_haeusliches_abwasser,
+                beseitigung_gewerbliches_abwasser=row.beseitigung_gewerbliches_abwasser,
+                beseitigung_platzentwaesserung=row.beseitigung_platzentwaesserung,
+                beseitigung_dachentwaesserung=row.beseitigung_dachentwaesserung,
+                bezeichnung=self.truncate(self.emptystr_to_null(row.bezeichnung), 20),
+                eigentuemeradresse=row.eigentuemeradresse,
+                eigentuemername=row.eigentuemername,
+                einwohnergleichwert=row.einwohnergleichwert,
+                lage=row.lage,
+                nummer=row.nummer,
+                sanierungsbedarf=row.sanierungsbedarf.capitalize(),
+                sanierungsdatum=row.sanierungsdatum,
+                sanierungskonzept=row.sanierungskonzept,
+            )
+            self.abwasser_session.add(bautenausserhalbbaugebiet)
             print(".", end="")
         logger.info("done")
         self.abwasser_session.flush()
@@ -2855,6 +2991,7 @@ class InterlisExporterToIntermediateSchema:
             "funktionhierarchisch": row.funktionhierarchisch,
             "jahr_zustandserhebung": row.jahr_zustandserhebung,
             "lage": row.lage,
+            "lagegenauigkeit": row.lagegenauigkeit,
             "letzte_aenderung_wi": row.letzte_aenderung_wi,
             "sanierungsbedarf": row.sanierungsbedarf,
             "sohlenkote": row.sohlenkote,
