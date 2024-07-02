@@ -17,6 +17,7 @@
  ***************************************************************************/
 """
 
+
 import statistics
 
 from PyQt5.QtCore import QVariant

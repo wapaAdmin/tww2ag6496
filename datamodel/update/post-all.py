@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 
 
-try:
-    import psycopg
-except ImportError:
-    import psycopg2 as psycopg
-
+import psycopg2
 from pum.core.deltapy import DeltaPy
 from view.create_views import create_views
 
@@ -29,7 +25,7 @@ class CreateViews(DeltaPy):
         )
 
         # refresh network views
-        conn = psycopg.connect(f"service={self.pg_service}")
+        conn = psycopg2.connect(f"service={self.pg_service}")
         cursor = conn.cursor()
         cursor.execute("SELECT tww_app.network_refresh_network_simple();")
         conn.commit()

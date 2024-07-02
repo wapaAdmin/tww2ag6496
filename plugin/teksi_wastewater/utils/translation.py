@@ -1,7 +1,6 @@
 """
 This module is used for translation of the TWW project
 """
-
 import logging
 import os
 

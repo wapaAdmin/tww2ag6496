@@ -12,9 +12,9 @@ from teksi_wastewater.interlis.utils.ili2db import InterlisTools
 
 # Display logging in unittest output
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.WARNING)
 logger.addHandler(handler)
 
 

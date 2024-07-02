@@ -1,10 +1,8 @@
 import os
 import unittest
 
-try:
-    import psycopg
-except ImportError:
-    import psycopg2 as psycopg
+import psycopg2
+import psycopg2.extras
 
 from .utils import DEFAULT_PG_SERVICE, DbTestBase
 
@@ -20,7 +18,7 @@ class TestSchemas(unittest.TestCase, DbTestBase):
     @classmethod
     def setUpClass(cls):
         pgservice = os.environ.get("PGSERVICE") or DEFAULT_PG_SERVICE
-        cls.conn = psycopg.connect(f"service={pgservice}")
+        cls.conn = psycopg2.connect(f"service={pgservice}")
 
     def test_list_schemas(self):
         schemas = ", ".join([f"'{schema}'" for schema in TWW_SCHEMAS + PG_SCHEMAS])

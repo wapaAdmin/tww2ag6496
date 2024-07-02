@@ -48,7 +48,7 @@ $BODY$
     NEW._url = replace(NEW._url, '\', '/');
 
     INSERT INTO tww_od.file(
-      classname,
+      class,
       identifier,
       kind,
       object,
@@ -59,7 +59,7 @@ $BODY$
       remark)
 
     SELECT
-      NEW.classname,
+      NEW.class,
       NEW.identifier,
       NEW.kind,
       NEW.object,
@@ -97,7 +97,7 @@ NEW._url = replace(NEW._url, '\', '/');
 
   UPDATE  tww_od.file
     SET
-    classname = NEW.classname,
+    class = NEW.class,
     identifier = NEW.identifier,
     kind = NEW.kind,
     object = NEW.object,

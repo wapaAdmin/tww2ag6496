@@ -1,10 +1,8 @@
 import os
 import unittest
 
-try:
-    import psycopg
-except ImportError:
-    import psycopg2 as psycopg
+import psycopg2
+import psycopg2.extras
 
 from .utils import DEFAULT_PG_SERVICE, DbTestBase
 
@@ -21,7 +19,7 @@ class TestSwmm(unittest.TestCase, DbTestBase):
     @classmethod
     def setUp(cls):
         pgservice = os.environ.get("PGSERVICE") or DEFAULT_PG_SERVICE
-        cls.conn = psycopg.connect(f"service={pgservice}")
+        cls.conn = psycopg2.connect(f"service={pgservice}")
 
     def test_count_vw_aquifers(self):
         self.assert_count("swmm_vw_aquifers", "tww_app", 0)
