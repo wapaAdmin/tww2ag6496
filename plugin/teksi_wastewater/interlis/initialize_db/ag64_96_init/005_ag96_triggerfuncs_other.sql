@@ -48,7 +48,7 @@ BEGIN
 			  END
 			, (CASE WHEN vw_val.lichte_breite_ist= 0 THEN 1
 			  ELSE vw_val.lichte_hoehe_ist::numeric/vw_val.lichte_breite_ist END)::numeric(5,2)
-			, {ext_schema}.convert_organisationid_to_vsa(vw_val.datenherr)
+			, tww_sys.get_default_values('fk_dataowner')
 			, {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 			FROM (SELECT NEW.*) vw_val
 			LEFT JOIN tww_vl.pipe_profile_profile_type ppt ON ppt.value_de =  vw_val.profiltyp 
@@ -78,7 +78,7 @@ BEGIN
     , reliner_nominal_size = vw_val.reliner_nennweite
     , relining_construction = re_rc.code
     , relining_kind = re_rk.code
-    , fk_dataowner = vw_val.datenherr
+    , fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , identifier = vw_val.bezeichnung
     , last_modification = vw_val.letzte_aenderung_wi
@@ -95,13 +95,13 @@ BEGIN
     , ws_structure_condition = ws_sc.code
     , ws_year_of_construction = vw_val.baujahr
     , rp_from_elevation_accuracy = rp_ea_fr.code
-    , rp_from_fk_dataowner = vw_val.datenherr
+    , rp_from_fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , rp_from_fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , rp_from_fk_wastewater_networkelement = vw_val.startknoten
     , rp_from_last_modification = vw_val.letzte_aenderung_wi
     , rp_from_level = vw_val.kote_beginn
     , rp_to_elevation_accuracy = rp_ea_to.code
-    , rp_to_fk_dataowner = vw_val.datenherr
+    , rp_to_fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , rp_to_fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , rp_to_fk_wastewater_networkelement = vw_val.endknoten
     , rp_to_last_modification = vw_val.letzte_aenderung_wi
@@ -208,7 +208,7 @@ BEGIN
     , vw_val.reliner_nennweite
     , re_rc.code
     , re_rk.code
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , vw_val.bezeichnung
     , vw_val.letzte_aenderung_wi
@@ -225,13 +225,13 @@ BEGIN
     , ws_sc.code
     , vw_val.baujahr
     , rp_ea_fr.code
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , vw_val.startknoten
     , vw_val.letzte_aenderung_wi
     , vw_val.kote_beginn
     , rp_ea_to.code
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , vw_val.endknoten
     , vw_val.letzte_aenderung_wi
@@ -310,7 +310,7 @@ BEGIN
     , year_implementation_effective = vw_val.jahr_umsetzung_effektiv
     , year_implementation_planned = vw_val.jahr_umsetzung_geplant
     , last_modification = vw_val.letzte_aenderung_gep
-    , fk_dataowner = vw_val.datenherr
+    , fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_gep)
     , fk_responsible_entity = {ext_schema}.convert_organisationid_to_vsa(vw_val.traegerschaft)
     , fk_responsible_start = {ext_schema}.convert_organisationid_to_vsa(vw_val.verantwortlich_ausloesung)
@@ -361,7 +361,7 @@ BEGIN
     , vw_val.jahr_umsetzung_effektiv
     , vw_val.jahr_umsetzung_geplant
     , vw_val.letzte_aenderung_gep
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_gep)
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.traegerschaft)
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.verantwortlich_ausloesung)
@@ -466,24 +466,24 @@ BEGIN
     , vw_val.fremdwasseranfall_ist
     , vw_val.fremdwasseranfall_geplant
     , vw_val.flaeche
-    , vw_val.abwasseranfall_ist
-    , vw_val.abwasseranfall_geplant
+    , vw_val.schmutzabwasseranfall_ist
+    , vw_val.schmutzabwasseranfall_geplant
     , vw_val.letzte_aenderung_gep
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_gep)
     , vw_val.gepknoten_rw_istref
     , vw_val.gepknoten_rw_geplantref
     , vw_val.gepknoten_sw_geplantref
     , vw_val.gepknoten_sw_istref
 	FROM (SELECT NEW.*) as vw_val
-	LEFT JOIN tww_vl.catchment_area_direct_discharge_current ddc on ddc.code = vw_val.direkteinleitung_in_gewaesser_ist
-	LEFT JOIN tww_vl.catchment_area_direct_discharge_planned ddp on ddp.code = vw_val.direkteinleitung_in_gewaesser_geplant
-	LEFT JOIN tww_vl.catchment_area_drainage_system_current dsc on dsc.code = vw_val.entwaesserungssystemag_ist
-	LEFT JOIN tww_vl.catchment_area_drainage_system_planned dsp on dsp.code = vw_val.entwaesserungssystemag_geplant
-	LEFT JOIN tww_vl.catchment_area_infiltration_current ic on ic.code = vw_val.versickerung_ist
-	LEFT JOIN tww_vl.catchment_area_infiltration_planned ip on ip.code = vw_val.versickerung_geplant
-	LEFT JOIN tww_vl.catchment_area_retention_current rc on rc.code = vw_val.retention_ist
-	LEFT JOIN tww_vl.catchment_area_retention_planned rp on rp.code = vw_val.retention_geplant	
+	LEFT JOIN tww_vl.catchment_area_direct_discharge_current ddc on ddc.value_de = vw_val.direkteinleitung_in_gewaesser_ist
+	LEFT JOIN tww_vl.catchment_area_direct_discharge_planned ddp on ddp.value_de = vw_val.direkteinleitung_in_gewaesser_geplant
+	LEFT JOIN tww_vl.catchment_area_drainage_system_current dsc on dsc.value_de = vw_val.entwaesserungssystemag_ist
+	LEFT JOIN tww_vl.catchment_area_drainage_system_planned dsp on dsp.value_de = vw_val.entwaesserungssystemag_geplant
+	LEFT JOIN tww_vl.catchment_area_infiltration_current ic on ic.value_de = vw_val.versickerung_ist
+	LEFT JOIN tww_vl.catchment_area_infiltration_planned ip on ip.value_de = vw_val.versickerung_geplant
+	LEFT JOIN tww_vl.catchment_area_retention_current rc on rc.value_de = vw_val.retention_ist
+	LEFT JOIN tww_vl.catchment_area_retention_planned rp on rp.value_de = vw_val.retention_geplant	
 	)
 	ON CONFLICT (obj_id)  DO UPDATE SET
 	(
@@ -710,7 +710,7 @@ BEGIN
     , vw_val.sanierungskonzept
     , vw_val.lage
     , vw_val.letzte_aenderung_gep
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_gep)
     , vw_val.eigentuemeradresse
     , vw_val.eigentuemername
@@ -863,7 +863,7 @@ BEGIN
     , vw_val.flaeche_reduziert_geplant
     , vw_val.schmutzabwasseranfall_ist
     , vw_val.letzte_aenderung_gep
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_gep)
     , vw_val.einleitstelleref
     , hcd_oid
@@ -1009,29 +1009,23 @@ LANGUAGE plpgsql;
 -------- Metainformation --------
 ---------------------------------
 
-CREATE OR REPLACE FUNCTION {ext_schema}.update_last_ag_modification()
+CREATE OR REPLACE FUNCTION tww_ag6496.update_last_ag_modification()
 RETURNS trigger AS
 $BODY$
   DECLARE
-	update_type varchar(3);
+	update_type varchar(4);
   BEGIN
-    BEGIN
 	  SELECT 
 	   ag_update_type
 	  INTO STRICT update_type 
-	  FROM {ext_schema}.update_manager
+	  FROM tww_cfg.agxx_last_modification_updater
 	  WHERE username=current_user;
 	  CASE 
 	   WHEN update_type ='wi' THEN NEW.ag64_last_modification=now();
 	   WHEN update_type ='gep' THEN NEW.ag96_last_modification=now();
+	   WHEN update_type ='both' THEN NEW.ag64_last_modification=now(); NEW.ag96_last_modification=now();
 	   ELSE NULL;
 	  END CASE;
-	  EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-		  RAISE WARNING 'Nutzer % existiert in Tabelle "{ext_schema}.update_manager" nicht. Letzte_Aenderung_WI resp. _GEP wurde nicht aktualisiert.', current_user;
-	    WHEN TOO_MANY_ROWS THEN
-          RAISE WARNING 'Nutzer % in {ext_schema}.update_manager nicht eindeutig', current_user;
-	END;
 	RETURN NEW;
   END;
 $BODY$

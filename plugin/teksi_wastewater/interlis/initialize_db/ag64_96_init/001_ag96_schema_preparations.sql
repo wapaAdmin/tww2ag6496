@@ -23,7 +23,7 @@ ALTER TABLE tww_vl.wastewater_node_ag96_is_gateway ADD CONSTRAINT pkey_tww_vl_wa
 
 -- Ist_Schnittstelle
 CREATE TABLE IF NOT EXISTS tww_vl.wastewater_node_ag64_function () INHERITS (tww_vl.value_list_base); --Werteliste
-ALTER TABLE tww_vl.wastewater_node_ag64_function DROP CONSTRAINT IF EXISTS pkey_tww_vl_wastewater_node_ag96_function CASCADE;
+ALTER TABLE tww_vl.wastewater_node_ag64_function DROP CONSTRAINT IF EXISTS pkey_tww_vl_wastewater_node_ag64_function CASCADE;
 ALTER TABLE tww_vl.wastewater_node_ag64_function ADD CONSTRAINT pkey_tww_vl_wastewater_node_ag64_function PRIMARY KEY (code);
 
 ALTER TABLE tww_od.wastewater_node ADD COLUMN IF NOT EXISTS ag96_is_gateway bigint;
@@ -116,13 +116,6 @@ CREATE TABLE IF NOT EXISTS {ext_schema}.vl_channel_usage_planned (code integer, 
 CREATE TABLE IF NOT EXISTS {ext_schema}.vl_building_group_function (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
 
 
-
--- 
-CREATE TABLE IF NOT EXISTS {ext_schema}.vsadss_dataowner (
-	onerow_id bool PRIMARY KEY DEFAULT true -- in Kombi mit Constraint verhindert der pkey, dass mehr als 1 Datenherr genutzt wird
-	,obj_id varchar(16) NOT NULL
-	, CONSTRAINT onerow_uni CHECK (onerow_id));
-
 -- Funktion zum Mapping der Organisations-ID
 
 CREATE OR REPLACE FUNCTION {ext_schema}.convert_organisationid_to_vsa(oid varchar)
@@ -144,10 +137,10 @@ LANGUAGE plpgsql;
 
 
 -- wird für Updates von letzte_aenderung_wi/gep genutzt
-CREATE TABLE IF NOT EXISTS {ext_schema}.update_manager(
+CREATE TABLE IF NOT EXISTS tww_cfg.agxx_last_modification_updater(
 	username varchar(200) PRIMARY KEY
-	, ag_update_type varchar(3) NOT NULL
-	, CONSTRAINT ag_update_type_valid CHECK (ag_update_type = ANY(ARRAY['wi','gep'])));
+	, ag_update_type varchar(4) NOT NULL
+	, CONSTRAINT ag_update_type_valid CHECK (ag_update_type = ANY(ARRAY['none','wi','gep','both'])));
 	
 	
 -- Rückfallebene für Leitungsknoten ohne Topologie beim Import

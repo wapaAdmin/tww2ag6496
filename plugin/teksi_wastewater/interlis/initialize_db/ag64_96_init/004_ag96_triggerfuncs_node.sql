@@ -23,7 +23,7 @@ BEGIN
 	, wwtp_number = vw_val.ara_nr
 	, ag96_is_gateway = gate.code
 	, ag64_function = wn_fct.code
-	, fk_dataowner = vw_val.datenherr
+	, fk_dataowner = tww_sys.get_default_values('fk_dataowner')
 	, fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 	, ag64_last_modification = vw_val.letzte_aenderung_wi
     , ag64_remark = vw_val.bemerkung_wi
@@ -63,7 +63,7 @@ BEGIN
 	, vw_val.ara_nr
 	, gate.code
 	, wn_fct.code
-    , vw_val.datenherr
+    , tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , vw_val.letzte_aenderung_wi
     , vw_val.bemerkung_wi
@@ -84,7 +84,7 @@ BEGIN
  	  level = vw_val.deckelkote
 	, positional_accuracy = co_posacc.code
 	, situation3d_geometry = ST_Force3D(vw_val.lage)
-	, fk_dataowner = vw_val.datenherr
+	, fk_dataowner = tww_sys.get_default_values('fk_dataowner')
 	, fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 	, last_modification = vw_val.letzte_aenderung_wi
   FROM (SELECT NEW.*) vw_val
@@ -105,7 +105,7 @@ BEGIN
   	  vw_val.deckelkote
 	, co_posacc.code
 	, ST_Force3D(vw_val.lage)
-	, vw_val.datenherr
+	, tww_sys.get_default_values('fk_dataowner')
     , {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 	, vw_val.bezeichnung
 	, vw_val.letzte_aenderung_wi
@@ -121,7 +121,7 @@ BEGIN
 	, accessibility = ws_acc.code
 	, detail_geometry3d_geometry = ST_Force3D(vw_val.detailgeometrie)
 	, financing = ws_fin.code
-	, fk_dataowner = vw_val.datenherr
+	, fk_dataowner = tww_sys.get_default_values('fk_dataowner')
 	, fk_main_cover = co_oid
 	, fk_operator = {ext_schema}.convert_organisationid_to_vsa(vw_val.betreiber)
 	, fk_owner = {ext_schema}.convert_organisationid_to_vsa(vw_val.eigentuemer)
@@ -165,7 +165,7 @@ BEGIN
 	, ws_acc.code
 	, ST_Force3D(vw_val.detailgeometrie)
 	, ws_fin.code
-	, vw_val.datenherr
+	, tww_sys.get_default_values('fk_dataowner')
 	, co_oid
 	, {ext_schema}.convert_organisationid_to_vsa(vw_val.betreiber)
 	, {ext_schema}.convert_organisationid_to_vsa(vw_val.eigentuemer)
@@ -276,7 +276,7 @@ BEGIN
     , accessibility = ws_acc.code
     , financing = ws_fin.code
 	, status_survey_year = vw_val.jahr_zustandserhebung
-    , fk_dataowner = vw_val.datenherr
+    , fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , fk_operator = {ext_schema}.convert_organisationid_to_vsa(vw_val.betreiber)
     , fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , renovation_necessity = ws_rn.code
@@ -290,7 +290,7 @@ BEGIN
 	, wn_wwtp_number = vw_val.ara_nr
     , wn_backflow_level_current = vw_val.maxrueckstauhoehe
     , wn_bottom_level = vw_val.sohlenkote
-    , wn_fk_dataowner = vw_val.datenherr
+    , wn_fk_dataowner = tww_sys.get_default_values('fk_dataowner')
     , wn_fk_provider = {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
     , wn_identifier = vw_val.bezeichnung
     , wn_ag64_last_modification = vw_val.letzte_aenderung_wi
@@ -369,7 +369,7 @@ BEGIN
 		, ws_acc.code
 		, ws_fin.code
 		, vw_val.jahr_zustandserhebung
-		, vw_val.datenherr
+		, tww_sys.get_default_values('fk_dataowner')
 		, {ext_schema}.convert_organisationid_to_vsa(vw_val.betreiber)
 		, {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 		, ws_rn.code
@@ -384,7 +384,7 @@ BEGIN
 		, vw_val.ara_nr
 		, vw_val.maxrueckstauhoehe
 		, vw_val.sohlenkote
-		, vw_val.datenherr
+		, tww_sys.get_default_values('fk_dataowner')
 		, {ext_schema}.convert_organisationid_to_vsa(vw_val.datenbewirtschafter_wi)
 		, vw_val.bezeichnung
 		, vw_val.letzte_aenderung_wi
