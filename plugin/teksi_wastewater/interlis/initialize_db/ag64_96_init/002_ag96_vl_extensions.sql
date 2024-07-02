@@ -162,23 +162,23 @@ UPDATE tww_vl.infiltration_zone_infiltration_capacity SET active = FALSE where c
 -- Backwards Matching --
 ------------------------
 
-INSERT INTO {ext_schema}.vl_infiltration_installation_kind (code,value_agxx) VALUES
+INSERT INTO tww_vl.infiltration_installation_kind_bwrel_agxx (code,value_agxx) VALUES
 (3283,'Versickerungsstrang'),  
 (3284,'Versickerungsschacht_Strang')
 ON CONFLICT DO NOTHING;  
 
-INSERT INTO {ext_schema}.vl_special_structure_function (code,value_agxx) VALUES
+INSERT INTO tww_vl.special_structure_function_bwrel_agxx (code,value_agxx) VALUES
 (8702,'Strassenwasserbehandlungsanlage'),  
 (8739,'Kontrollschacht'),  
 (9089,'Vorbehandlung')
 ON CONFLICT DO NOTHING; 
 
-INSERT INTO {ext_schema}.vl_manhole_function (code,value_agxx) VALUES
+INSERT INTO tww_vl.manhole_function_bwrel_agxx (code,value_agxx) VALUES
 (8736,'Kontrollschacht'),  
 (8703,'Vorbehandlung')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO {ext_schema}.vl_channel_usage_current (code,value_agxx) VALUES
+INSERT INTO tww_vl.channel_usage_current_bwrel_agxx (code,value_agxx) VALUES
 (4522,'Mischwasser'),  
 (4514,'Fremdwasser'),
 (9023,'Sauberwasser'),
@@ -187,7 +187,7 @@ INSERT INTO {ext_schema}.vl_channel_usage_current (code,value_agxx) VALUES
 (4526,'Schmutzwasser')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO {ext_schema}.vl_channel_usage_planned (code,value_agxx) VALUES
+INSERT INTO tww_vl.channel_usage_planned_bwrel_agxx (code,value_agxx) VALUES
 (4523,'Mischwasser'),  
 (4515,'Fremdwasser'),
 (9022,'Sauberwasser'),
@@ -196,7 +196,7 @@ INSERT INTO {ext_schema}.vl_channel_usage_planned (code,value_agxx) VALUES
 (4527,'Schmutzwasser')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO {ext_schema}.vl_building_group_function (code,value_agxx) VALUES
+INSERT INTO tww_vl.building_group_function_bwrel_agxx (code,value_agxx) VALUES
 (4823,'andere'),  
 (4820,'Ferienhaus'),
 (4821,'Gewerbegebiet'),
@@ -204,3 +204,32 @@ INSERT INTO {ext_schema}.vl_building_group_function (code,value_agxx) VALUES
 (4818,'andere'),
 (4819,'Wohnhaus')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO tww_vl.infiltration_zone_infiltration_capacity_bwrel_agxx (code,value_agxx) VALUES
+(371,'gut.Anlagenwahl_nicht_eingeschraenkt'),  
+(372,'mittel.Anlagenwahl_nicht_eingeschraenkt')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO tww_vl.manhole_function_bwrel_agxx (code,value_agxx) VALUES
+(8828,'Entwaesserungsrinne'),  
+(8601,'Schwimmstoffabscheider')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO tww_vl.special_structure_function_bwrel_agxx (code,value_agxx) VALUES
+(8600,'Schwimmstoffabscheider'),  
+(8657,'andere')
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO tww_vl.measure_category_bwrel_agxx (code,value_agxx) VALUES
+(9144,'andere'),
+(8706,'andere'),
+(8648,'Reinigung'),
+(8646,'Renovierung'),
+(8647,'andere'),
+(4662,'Untersuchung.unbekannt'),
+(8639,'andere'),
+(8707,'Sonderbauwerk.Anpassung_hydraulisch'),
+(8705,'Sonderbauwerk.Neubau')
+ON CONFLICT DO NOTHING;
+

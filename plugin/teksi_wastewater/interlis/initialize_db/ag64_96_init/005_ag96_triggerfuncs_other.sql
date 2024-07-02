@@ -115,11 +115,11 @@ BEGIN
 	FROM (SELECT NEW.*) vw_val
 	LEFT JOIN tww_vl.reach_material re_mat ON re_mat.value_de=vw_val.material
 	LEFT JOIN tww_vl.channel_usage_current ch_uc ON ch_uc.value_de=vw_val.nutzungsartag_ist
-	LEFT JOIN {ext_schema}.vl_channel_usage_current ch_uc2 ON ch_uc2.value_agxx=vw_val.nutzungsartag_ist
+	LEFT JOIN tww_vl.channel_usage_current_bwrel_agxx ch_uc2 ON ch_uc2.value_agxx=vw_val.nutzungsartag_ist
 	LEFT JOIN tww_vl.channel_function_hierarchic ch_fhi ON ch_fhi.value_de=vw_val.funktionhierarchisch
 	LEFT JOIN tww_vl.channel_function_hydraulic ch_fhy ON ch_fhy.value_de=vw_val.funktionhydraulisch
 	LEFT JOIN tww_vl.channel_usage_planned ch_up ON ch_up.value_de=vw_val.nutzungsartag_geplant
-	LEFT JOIN {ext_schema}.vl_channel_usage_planned ch_up2 ON ch_up2.value_agxx=vw_val.nutzungsartag_geplant
+	LEFT JOIN tww_vl.channel_usage_planned_bwrel_agxx ch_up2 ON ch_up2.value_agxx=vw_val.nutzungsartag_geplant
 	LEFT JOIN tww_vl.wastewater_structure_status ws_st ON ws_st.value_de=vw_val.bauwerkstatus
 	LEFT JOIN tww_vl.wastewater_structure_structure_condition ws_sc ON ws_sc.value_de=vw_val.baulicherzustand
 	LEFT JOIN tww_vl.wastewater_structure_renovation_necessity ws_rn ON ws_rn.value_de=vw_val.sanierungsbedarf
@@ -245,11 +245,11 @@ BEGIN
 	FROM (SELECT NEW.*) vw_val
 	LEFT JOIN tww_vl.reach_material re_mat ON re_mat.value_de=vw_val.material
 	LEFT JOIN tww_vl.channel_usage_current ch_uc ON ch_uc.value_de=vw_val.nutzungsartag_ist
-	LEFT JOIN {ext_schema}.vl_channel_usage_current ch_uc2 ON ch_uc2.value_agxx=vw_val.nutzungsartag_ist
+	LEFT JOIN tww_vl.channel_usage_current_bwrel_agxx ch_uc2 ON ch_uc2.value_agxx=vw_val.nutzungsartag_ist
 	LEFT JOIN tww_vl.channel_function_hierarchic ch_fhi ON ch_fhi.value_de=vw_val.funktionhierarchisch
 	LEFT JOIN tww_vl.channel_function_hydraulic ch_fhy ON ch_fhy.value_de=vw_val.funktionhydraulisch
 	LEFT JOIN tww_vl.channel_usage_planned ch_up ON ch_up.value_de=vw_val.nutzungsartag_geplant
-	LEFT JOIN {ext_schema}.vl_channel_usage_planned ch_up2 ON ch_up2.value_agxx=vw_val.nutzungsartag_geplant
+	LEFT JOIN tww_vl.channel_usage_planned_bwrel_agxx ch_up2 ON ch_up2.value_agxx=vw_val.nutzungsartag_geplant
 	LEFT JOIN tww_vl.wastewater_structure_status ws_st ON ws_st.value_de=vw_val.bauwerkstatus
 	LEFT JOIN tww_vl.wastewater_structure_structure_condition ws_sc ON ws_sc.value_de=vw_val.baulicherzustand
 	LEFT JOIN tww_vl.wastewater_structure_renovation_necessity ws_rn ON ws_rn.value_de=vw_val.sanierungsbedarf
@@ -721,12 +721,12 @@ BEGIN
     , bg_dt_rw.code
 	FROM (SELECT NEW.*) as vw_val
 	LEFT JOIN tww_vl.building_group_function bg_fct on bg_fct.value_de = vw_val.arealnutzung
-	LEFT JOIN {ext_schema}.vl_building_group_function bg_fct_ag96 on bg_fct_ag96.value_agxx = vw_val.arealnutzung
+	LEFT JOIN tww_vl.building_group_function_bwrel_agxx bg_fct_ag96 on bg_fct_ag96.value_agxx = vw_val.arealnutzung
 	LEFT JOIN tww_vl.building_group_renovation_necessity bg_rn on bg_rn.value_de = vw_val.sanierungsbedarf
-	LEFT JOIN {ext_schema}.vl_building_group_disposal_type bg_dt_ww ON bg_dt_ww.value_de = vw_val.beseitigung_haeusliches_abwasser 
-	LEFT JOIN {ext_schema}.vl_building_group_disposal_type bg_dt_iw ON bg_dt_iw.value_de = vw_val.beseitigung_gewerbliches_abwasser 
-	LEFT JOIN {ext_schema}.vl_building_group_disposal_type bg_dt_sw ON bg_dt_sw.value_de = vw_val.beseitigung_platzentwaesserung 
-	LEFT JOIN {ext_schema}.vl_building_group_disposal_type bg_dt_rw ON bg_dt_rw.value_de = vw_val.beseitigung_dachentwaesserung 
+	LEFT JOIN tww_vl.building_group_disposal_type_bwrel_agxx bg_dt_ww ON bg_dt_ww.value_de = vw_val.beseitigung_haeusliches_abwasser 
+	LEFT JOIN tww_vl.building_group_disposal_type_bwrel_agxx bg_dt_iw ON bg_dt_iw.value_de = vw_val.beseitigung_gewerbliches_abwasser 
+	LEFT JOIN tww_vl.building_group_disposal_type_bwrel_agxx bg_dt_sw ON bg_dt_sw.value_de = vw_val.beseitigung_platzentwaesserung 
+	LEFT JOIN tww_vl.building_group_disposal_type_bwrel_agxx bg_dt_rw ON bg_dt_rw.value_de = vw_val.beseitigung_dachentwaesserung 
 	LEFT JOIN {ext_schema}.vsadss_dataowner downr ON 1=1
 	)
 	ON CONFLICT(obj_id) DO UPDATE SET
@@ -1010,23 +1010,25 @@ LANGUAGE plpgsql;
 ---------------------------------
 
 CREATE OR REPLACE FUNCTION tww_ag6496.update_last_ag_modification()
-RETURNS trigger AS
+    RETURNS trigger AS 
 $BODY$
   DECLARE
 	update_type varchar(4);
   BEGIN
 	  SELECT 
 	   ag_update_type
-	  INTO STRICT update_type 
-	  FROM tww_cfg.agxx_last_modification_updater
+	  INTO update_type 
+	  FROM tww_ag6496.update_manager
 	  WHERE username=current_user;
 	  CASE 
-	   WHEN update_type ='wi' THEN NEW.ag64_last_modification=now();
-	   WHEN update_type ='gep' THEN NEW.ag96_last_modification=now();
-	   WHEN update_type ='both' THEN NEW.ag64_last_modification=now(); NEW.ag96_last_modification=now();
-	   ELSE NULL;
+	   WHEN update_type IN ('wi','both') THEN NEW.ag64_last_modification= TIMEOFDAY();
+	  ELSE NULL;
+	  END CASE;
+	  CASE
+	   WHEN update_type IN('gep','both') THEN NEW.ag96_last_modification= TIMEOFDAY();
+	  ELSE NULL;
 	  END CASE;
 	RETURN NEW;
   END;
-$BODY$
+$BODY$;
 LANGUAGE plpgsql;

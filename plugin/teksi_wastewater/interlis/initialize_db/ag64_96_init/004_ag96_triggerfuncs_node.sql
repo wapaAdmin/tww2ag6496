@@ -188,7 +188,7 @@ BEGIN
 	END IF;
     ELSE
     -- keine View, daher geht ON CONFLICT
-	INSERT INTO {ext_schema}.od_unconnected_node_bwrel(
+	INSERT INTO tww_od.agxx_unconnected_node_bwrel(
     obj_id,
 	baujahr,
 	baulicherzustand,
@@ -305,11 +305,11 @@ BEGIN
 	LEFT JOIN tww_vl.discharge_point_relevance dp_rel ON dp_rel.value_de=replace(vw_val.funktionag,'Einleitstelle_','')
 	LEFT JOIN tww_vl.cover_positional_accuracy co_posacc ON co_posacc.value_de=vw_val.lagegenauigkeit
 	LEFT JOIN tww_vl.infiltration_installation_kind ii_ki ON ii_ki.value_de=replace(vw_val.funktionag,'Versickerungsanlage','')
-	LEFT JOIN {ext_schema}.vl_infiltration_installation_kind ii_ki2 ON ii_ki2.value_agxx=vw_val.funktionag
+	LEFT JOIN tww_vl.infiltration_installation_kind_bwrel_agxx ii_ki2 ON ii_ki2.value_agxx=vw_val.funktionag
 	LEFT JOIN tww_vl.special_structure_function ss_fu ON ss_fu.value_de=vw_val.funktionag
-	LEFT JOIN {ext_schema}.vl_special_structure_function ss_fu2 ON ss_fu2.value_agxx=vw_val.funktionag
+	LEFT JOIN tww_vl.special_structure_function_bwrel_agxx ss_fu2 ON ss_fu2.value_agxx=vw_val.funktionag
 	LEFT JOIN tww_vl.manhole_function ma_fu ON ma_fu.value_de=vw_val.funktionag
-	LEFT JOIN {ext_schema}.vl_manhole_function ma_fu2 ON ma_fu2.value_agxx=vw_val.funktionag
+	LEFT JOIN tww_vl.manhole_function_bwrel_agxx ma_fu2 ON ma_fu2.value_agxx=vw_val.funktionag
 	LEFT JOIN tww_vl.wastewater_structure_structure_condition ws_sc ON ws_sc.value_de=vw_val.baulicherzustand
 	LEFT JOIN tww_vl.wastewater_structure_renovation_necessity ws_rn ON ws_rn.value_de=vw_val.sanierungsbedarf
 	LEFT JOIN tww_vl.wastewater_structure_financing ws_fin ON ws_fin.value_de=vw_val.finanzierung
@@ -399,11 +399,11 @@ BEGIN
 	  LEFT JOIN tww_vl.discharge_point_relevance dp_rel ON dp_rel.value_de=replace(vw_val.funktionag,'Einleitstelle_','')
 	  LEFT JOIN tww_vl.cover_positional_accuracy co_posacc ON co_posacc.value_de=vw_val.lagegenauigkeit
 	  LEFT JOIN tww_vl.infiltration_installation_kind ii_ki ON ii_ki.value_de=replace(vw_val.funktionag,'Versickerungsanlage','')
-	  LEFT JOIN {ext_schema}.vl_infiltration_installation_kind ii_ki2 ON ii_ki2.value_agxx=vw_val.funktionag
+	  LEFT JOIN tww_vl.infiltration_installation_kind_bwrel_agxx ii_ki2 ON ii_ki2.value_agxx=vw_val.funktionag
 	  LEFT JOIN tww_vl.special_structure_function ss_fu ON ss_fu.value_de=vw_val.funktionag
-	  LEFT JOIN {ext_schema}.vl_special_structure_function ss_fu2 ON ss_fu2.value_agxx=vw_val.funktionag
+	  LEFT JOIN tww_vl.special_structure_function_bwrel_agxx ss_fu2 ON ss_fu2.value_agxx=vw_val.funktionag
   	  LEFT JOIN tww_vl.manhole_function ma_fu ON ma_fu.value_de=vw_val.funktionag
-	  LEFT JOIN {ext_schema}.vl_manhole_function ma_fu2 ON ma_fu2.value_agxx=vw_val.funktionag
+	  LEFT JOIN tww_vl.manhole_function_bwrel_agxx ma_fu2 ON ma_fu2.value_agxx=vw_val.funktionag
 	  LEFT JOIN tww_vl.wastewater_structure_structure_condition ws_sc ON ws_sc.value_de=vw_val.baulicherzustand
 	  LEFT JOIN tww_vl.wastewater_structure_renovation_necessity ws_rn ON ws_rn.value_de=vw_val.sanierungsbedarf
 	  LEFT JOIN tww_vl.wastewater_structure_financing ws_fin ON ws_fin.value_de=vw_val.finanzierung

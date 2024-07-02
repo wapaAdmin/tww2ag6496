@@ -136,17 +136,17 @@ AS
      LEFT JOIN tww_od.building build ON build.obj_id::text = conn_obj.obj_id::text
      LEFT JOIN tww_od.wwtp_structure wwtp ON main_ws.obj_id::text = wwtp.obj_id::text
      LEFT JOIN tww_vl.wastewater_node_ag96_is_gateway isgate ON wn.ag96_is_gateway = isgate.code
-     LEFT JOIN {ext_schema}.od_unconnected_node_bwrel unc ON unc.obj_id::text = wn.obj_id::text
+     LEFT JOIN tww_od.agxx_unconnected_node_bwrel unc ON unc.obj_id::text = wn.obj_id::text
      LEFT JOIN tww_vl.wastewater_structure_status st ON st.code = ws.status
      LEFT JOIN tww_od.manhole ma ON main_ws.obj_id::text = ma.obj_id::text
      LEFT JOIN tww_vl.manhole_function ma_fu ON ma_fu.code = ma.function
-     LEFT JOIN {ext_schema}.vl_manhole_function ma_fu_rev ON ma_fu_rev.code = ma.function
+     LEFT JOIN tww_vl.manhole_function_bwrel_agxx ma_fu_rev ON ma_fu_rev.code = ma.function
      LEFT JOIN tww_od.special_structure ss ON main_ws.obj_id::text = ss.obj_id::text
      LEFT JOIN tww_vl.special_structure_function ss_fu ON ss_fu.code = ss.function
-     LEFT JOIN {ext_schema}.vl_special_structure_function ss_fu_rev ON ss_fu_rev.code = ss.function
+     LEFT JOIN tww_vl.special_structure_function_bwrel_agxx ss_fu_rev ON ss_fu_rev.code = ss.function
      LEFT JOIN tww_od.infiltration_installation ii ON main_ws.obj_id::text = ii.obj_id::text
      LEFT JOIN tww_vl.infiltration_installation_kind ii_ki ON ii_ki.code = ii.kind
-     LEFT JOIN {ext_schema}.vl_infiltration_installation_kind ii_ki_rev ON ii_ki_rev.code = ii.kind
+     LEFT JOIN tww_vl.infiltration_installation_kind_bwrel_agxx ii_ki_rev ON ii_ki_rev.code = ii.kind
      LEFT JOIN tww_od.discharge_point dp ON main_ws.obj_id::text = dp.obj_id::text
      LEFT JOIN tww_vl.discharge_point_relevance dp_rel ON dp_rel.code = dp.relevance
      LEFT JOIN tww_vl.wastewater_structure_structure_condition sc ON sc.code = ws.structure_condition
@@ -234,9 +234,9 @@ FROM tww_od.reach re
 	LEFT JOIN tww_vl.pipe_profile_profile_type ppt ON ppt.code=pp.profile_type
 	LEFT JOIN tww_vl.wastewater_structure_status st ON st.code=ws.status
 	LEFT JOIN tww_vl.channel_usage_current uc ON uc.code=ch.usage_current
-	LEFT JOIN {ext_schema}.vl_channel_usage_current uc_rev ON uc_rev.code=ch.usage_current
+	LEFT JOIN tww_vl.channel_usage_current_bwrel_agxx uc_rev ON uc_rev.code=ch.usage_current
 	LEFT JOIN tww_vl.channel_usage_planned up ON up.code=ch.usage_planned
-	LEFT JOIN {ext_schema}.vl_channel_usage_planned up_rev ON up_rev.code=ch.usage_planned
+	LEFT JOIN tww_vl.channel_usage_planned_bwrel_agxx up_rev ON up_rev.code=ch.usage_planned
 ;
 
 

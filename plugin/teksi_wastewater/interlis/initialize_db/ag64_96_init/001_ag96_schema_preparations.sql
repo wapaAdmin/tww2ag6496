@@ -108,12 +108,12 @@ ALTER TABLE tww_od.infiltration_zone
 
 -- Value list mapping für Rückwärtsimport. Keine inheritance, da sonst pkey in value_list_base nicht eindeutig ist
 
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_special_structure_function (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_manhole_function (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_infiltration_installation_kind (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_channel_usage_current (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_channel_usage_planned (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
-CREATE TABLE IF NOT EXISTS {ext_schema}.vl_building_group_function (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.special_structure_function_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.manhole_function_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.infiltration_installation_kind_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.channel_usage_current_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.channel_usage_planned_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
+CREATE TABLE IF NOT EXISTS tww_vl.building_group_function_bwrel_agxx (code integer, value_agxx TEXT PRIMARY KEY); --Werteliste
 
 
 -- Funktion zum Mapping der Organisations-ID
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS tww_cfg.agxx_last_modification_updater(
 	
 	
 -- Rückfallebene für Leitungsknoten ohne Topologie beim Import
-CREATE TABLE IF NOT EXISTS {ext_schema}.od_unconnected_node_bwrel (
+CREATE TABLE IF NOT EXISTS tww_od.agxx_unconnected_node_bwrel (
 	obj_id character varying(16),
 	baujahr integer,
 	baulicherzustand varchar(100),
@@ -163,6 +163,6 @@ CREATE TABLE IF NOT EXISTS {ext_schema}.od_unconnected_node_bwrel (
 	CONSTRAINT pkey_{ext_schema}_od_unconnected_node_bwrel_obj_id PRIMARY KEY (obj_id)); --Werteliste
 	
 CREATE INDEX IF NOT EXISTS in_{ext_schema}_od_unconnected_node_bwrel_detailgeometrie2d
-    ON {ext_schema}.od_unconnected_node_bwrel USING gist
+    ON tww_od.agxx_unconnected_node_bwrel USING gist
     (detailgeometrie2d)
     TABLESPACE pg_default;
