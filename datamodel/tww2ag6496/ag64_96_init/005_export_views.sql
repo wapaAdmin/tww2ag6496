@@ -88,9 +88,7 @@ FunktionBauwerkAG =   (
 
 */
 
-
-DROP VIEW IF EXISTS tww_ag6496.gepknoten;
-CREATE VIEW tww_ag6496.gepknoten
+CREATE MATERIALIZED VIEW {ext_schema}.knoten_bauwerksattribute
 AS
 WITH re_meta AS(
 	SELECT re.obj_id,
@@ -127,8 +125,8 @@ WITH re_meta AS(
 				 ag96_fk_measure
 				 FROM tww_od.wastewater_structure  )      ws ON ws.obj_id = ne.fk_wastewater_structure
       LEFT JOIN (SELECT code, order_fct_hierarchic
-				 FROM tww_vl.channel_function_hierarchic) vl_fct_hier	ON CH.function_hierarchic = vl_fct_hier.code ),
-ws_attr AS (SELECT DISTINCT ON (wn.obj_id) wn.obj_id AS obj_id,
+				 FROM tww_vl.channel_function_hierarchic) vl_fct_hier	ON CH.function_hierarchic = vl_fct_hier.code )
+	SELECT DISTINCT ON (wn.obj_id) wn.obj_id AS obj_id,
 	  COALESCE(first_value(ws.year_of_construction) OVER w
              , first_value(re_from.year_of_construction) OVER w
              , first_value(re_to.year_of_construction) OVER w
@@ -210,8 +208,18 @@ ws_attr AS (SELECT DISTINCT ON (wn.obj_id) wn.obj_id AS obj_id,
                     ORDER BY re_from.order_fct_hierarchic ASC NULLS LAST
                            , re_to.order_fct_hierarchic ASC NULLS LAST
                           , vl_fct_hier_unc.order_fct_hierarchic ASC NULLS LAST
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING))
-					
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+
+WITH DATA;
+
+CREATE INDEX in_{ext_schema}_knoten_bauwerksattribute_obj_id
+    ON {ext_schema}.knoten_bauwerksattribute USING btree
+    (obj_id)
+    TABLESPACE pg_default;
+
+DROP VIEW IF EXISTS {ext_schema}.gepknoten;
+CREATE VIEW {ext_schema}.gepknoten
+AS			
 SELECT
 	  wn.obj_id AS obj_id
 	, wn.wwtp_number AS ara_nr
@@ -262,7 +270,7 @@ SELECT
 
 FROM tww_od.wastewater_node wn
 LEFT JOIN tww_od.wastewater_networkelement ne ON wn.obj_id = ne.obj_id
-LEFT JOIN ws_attr ws ON wn.obj_id=ws.obj_id
+LEFT JOIN {ext_schema}.knoten_bauwerksattribute ws ON wn.obj_id=ws.obj_id
 LEFT JOIN tww_od.wastewater_structure main_ws ON wn.obj_id=main_ws.fk_main_wastewater_node
 
 LEFT JOIN tww_od.measuring_point meas_pt ON main_ws.obj_id=meas_pt.fk_wastewater_structure
