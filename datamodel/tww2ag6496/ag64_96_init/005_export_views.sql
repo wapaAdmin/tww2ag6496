@@ -89,8 +89,8 @@ FunktionBauwerkAG =   (
 */
 
 
-DROP MATERIALIZED VIEW IF EXISTS tww_ag6496.gepknoten;
-CREATE MATERIALIZED VIEW tww_ag6496.gepknoten
+DROP VIEW IF EXISTS tww_ag6496.gepknoten;
+CREATE VIEW tww_ag6496.gepknoten
 AS
 WITH re_meta AS(
 	SELECT re.obj_id,
