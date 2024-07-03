@@ -301,8 +301,7 @@ LEFT JOIN tww_vl.channel_function_hierarchic fhi ON fhi.code=wn._function_hierar
 LEFT JOIN tww_od.cover main_co ON main_co.obj_id=ws.fk_main_cover
 LEFT JOIN tww_vl.cover_positional_accuracy co_pa ON co_pa.code=main_co.positional_accuracy
 LEFT JOIN tww_vl.cover_positional_accuracy unc_pa ON unc_pa.code=unc.co_positional_accuracy
-LEFT JOIN tww_vl.wastewater_structure_accessibility  ac ON ac.code=ws.accessibility
-WITH DATA;
+LEFT JOIN tww_vl.wastewater_structure_accessibility  ac ON ac.code=ws.accessibility;
 
 ------------------
 -- GEPHaltung
