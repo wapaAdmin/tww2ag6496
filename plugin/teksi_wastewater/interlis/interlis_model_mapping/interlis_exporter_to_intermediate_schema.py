@@ -22,6 +22,7 @@ class InterlisExporterToIntermediateSchema:
         model_classes_tww_vl,
         model_classes_tww_sys,
         model_classes_tww_ag6496=None,
+        labels_orientation_offset=90,
         selection=None,
         labels_file=None,
         basket_enabled=False,
@@ -54,6 +55,7 @@ class InterlisExporterToIntermediateSchema:
         self.model_classes_tww_sys = model_classes_tww_sys
         self.model_classes_tww_ag6496 = model_classes_tww_ag6496
 
+        self.labels_orientation_offset= labels_orientation_offset
         self.tww_session = None
         self.abwasser_session = None
         self.tid_maker = utils.ili2db.TidMaker(id_attribute="obj_id")
@@ -2984,7 +2986,7 @@ class InterlisExporterToIntermediateSchema:
             logger.warning(f"Value '{val}' exceeds expected length ({max_length})")
         return val[0:max_length]
 
-    def _modulo_angle(self, val, labels_orientation_offset):
+    def _modulo_angle(self, val):
         """
         Returns an angle between 0 and 359.9 (for Orientierung in Base_d-20181005.ili)
         """
@@ -2992,7 +2994,7 @@ class InterlisExporterToIntermediateSchema:
             return None
 
         # add labels_orientation_offset
-        val = val + labels_orientation_offset
+        val = val + self.labels_orientation_offset
 
         val = val % 360.0
         if val > 359.9:

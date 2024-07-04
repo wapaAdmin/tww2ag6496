@@ -193,8 +193,6 @@ class InterlisImporterExporter:
             labels_file_path = os.path.join(tempdir.name, "labels.geojson")
             self._export_labels_file(
                 limit_to_selection=limit_to_selection,
-                # neu export orientation
-                export_orientation=export_orientation,
                 selected_labels_scales_indices=selected_labels_scales_indices,
                 labels_file_path=labels_file_path,
                 export_model=export_models[0]
@@ -322,7 +320,6 @@ class InterlisImporterExporter:
     def _export_labels_file(
         self,
         limit_to_selection,
-        export_orientation,
         selected_labels_scales_indices,
         labels_file_path,
         export_model
