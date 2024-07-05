@@ -2,6 +2,7 @@
 -------- Metainformation --------
 ---------------------------------
 
+
 CREATE OR REPLACE FUNCTION tww_ag6496.update_last_ag_modification()
 RETURNS trigger AS
 $BODY$
