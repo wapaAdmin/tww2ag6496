@@ -1,6 +1,6 @@
 -- Funktion zum Mapping der Organisations-ID
 
-CREATE OR REPLACE FUNCTION {ext_schema}.convert_organisationid_to_vsa(oid varchar)
+CREATE OR REPLACE FUNCTION tww_ag6496.convert_organisationid_to_vsa(oid varchar)
 RETURNS varchar(16)
 AS 
 $BODY$
