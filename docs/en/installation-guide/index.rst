@@ -14,4 +14,5 @@ get your system ready for running TWW.
    requirements
    server
    database-initialization
+   database-extensions
    workstation
