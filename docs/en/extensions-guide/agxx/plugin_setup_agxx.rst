@@ -19,6 +19,17 @@ In the tab *Developer options*, there is a Checkbox to enable the AG-64/96 exten
  .. figure:: images/opensettingsdialog.png
  
  When this checkbox is ticked, the data models AG-64/AG-96 are available in the interlis export.
+
+.. _last_modification_agxx
+Handling of last modification
+^^^^^^^^^^^^^^^^^^^^^^
+
+AG-64 and AG-96 have separated values for last_modification. In the plugin settings, there is a hidden combobox that allows altering which last_modification(s) should be updated. 
+
+ .. figure:: images/opensettingsdialog.png
+ 
+In the database, there is a table from which that value is taken on startup, so the setting does not need to be changed every time a project is opened.
+ 
  
  .. _project_setup_agxx
 Project setup
