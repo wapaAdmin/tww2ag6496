@@ -62,8 +62,8 @@ class TwwSettingsDialog(QDialog, DIALOG_UI):
         
         ag6496extension = self.settings.value("/TWW/AGxxExtensions", False, type=bool)
         self.mCbAg6496Extension.setChecked(ag6496extension)
-        self.initAG64LastModificationCombobox(self.mCbAg6496LastModification)
-        self.mCbAg6496Extension.clicked.connect(self.initAG64LastModificationCombobox(self.mCbAg6496LastModification))
+        
+        self.initAG64LastModificationCombobox()
 
         lyr_special_structures, _ = project.readEntry("TWW", "SpecialStructureLayer")
         lyr_graph_edges, _ = project.readEntry("TWW", "GraphEdgeLayer")
@@ -107,33 +107,44 @@ class TwwSettingsDialog(QDialog, DIALOG_UI):
         idx = combobox.findData(default)
         if idx != -1:
             combobox.setCurrentIndex(idx)
-    
-    @pyqtSlot()    
-    def initAG64LastModificationCombobox(self, combobox):
+     
+    def initAG64LastModificationCombobox(self):
         default='None'
-        idx = combobox.currentIndex()
+        idx = self.mCbAg6496LastModification.currentIndex()
         if not idx or idx == -1:
-            combobox.setCurrentIndex(combobox.findText(default))
+            self.mCbAg6496LastModification.setCurrentIndex(self.mCbAg6496LastModification.findText(default))
+        self.execAG64LastModificationCombobox('init')
+
+                
+    def execAG64LastModificationCombobox(self,flag: str):
+        idx = self.mCbAg6496LastModification.currentIndex()
         if self.mCbAg6496Extension.isChecked(): # use if clause to not trigger any db calls on startup unless necessary
-            table_exists = DatabaseUtils.fetchone("""'SELECT EXISTS( SELECT 1 FROM information_schema.tables 
+            _ = DatabaseUtils.get_pgconf_from_tww_layer("vw_tww_wastewater_structure")
+            pgconf = DatabaseUtils.get_pgconf()
+            table_exists = DatabaseUtils.fetchone("""SELECT EXISTS( SELECT 1 FROM information_schema.tables 
                     WHERE  table_schema = 'tww_cfg'
                     AND table_name   = 'agxx_last_modification_updater')""")
-            if table_exists[0]:
+            if table_exists:
                 agxx_last_mod_setting = DatabaseUtils.fetchone(f"""
                 SELECT ag_update_type 
                 FROM tww_cfg.agxx_last_modification_updater
-                WHERE username={DatabaseUtils.databaseConfig.PGUSER};
+                WHERE username='{pgconf["user"]}';
                 """)
-                if agxx_last_mod_setting[0]:
-                    idx = combobox.findData(agxx_last_mod_setting[0])
+                if agxx_last_mod_setting:
+                    if flag == 'init':
+                        idx = self.mCbAg6496LastModification.findText(agxx_last_mod_setting[0])
+                        if idx != -1:
+                            self.mCbAg6496LastModification.setCurrentIndex(idx)
+                    elif flag == 'update':
+                        DatabaseUtils.execute(f"""
+                        UPDATE tww_cfg.agxx_last_modification_updater 
+                        SET ag_update_type = '{self.mCbAg6496LastModification.currentText()}'
+                        WHERE username ='{pgconf["user"]}';""")
                 else:
                     DatabaseUtils.execute(f"""
                     INSERT INTO tww_cfg.agxx_last_modification_updater (username, ag_update_type)
-                    VALUES ({DatabaseUtils.databaseConfig.PGUSER},{default})
+                    VALUES ('{pgconf["user"]}','{default}')
                     ;""")
-            if idx != -1:
-                combobox.setCurrentIndex(idx)
-                
 
 
     @pyqtSlot()
@@ -147,8 +158,12 @@ class TwwSettingsDialog(QDialog, DIALOG_UI):
 
         self.settings.setValue("/TWW/DeveloperMode", self.mCbDevelMode.isChecked())
         self.settings.setValue("/TWW/AdminMode", self.mCbAdminMode.isChecked())
+        
+        #AG-xx extensions
         self.settings.setValue("/TWW/AGxxExtensions", self.mCbAg6496Extension.isChecked())
-
+        if self.mCbAg6496Extension.isChecked():
+            self.execAG64LastModificationCombobox('update')
+                
         # Logging
         if hasattr(twwlogger, "twwFileHandler"):
             twwlogger.removeHandler(twwlogger.twwFileHandler)
@@ -205,16 +220,7 @@ class TwwSettingsDialog(QDialog, DIALOG_UI):
         project.writeEntry(
             "TWW", "GraphNodeLayer", self.mCbGraphNodes.itemData(graph_nodelayer_idx)
         )
-        if self.mCbAg6496Extension.isChecked():
-            agxx_lastmod_idx = self.mCbAg6496LastModification.currentIndex()
-            table_exists = DatabaseUtils.fetchone("""'SELECT EXISTS( SELECT 1 FROM information_schema.tables 
-                    WHERE  table_schema = 'tww_cfg'
-                    AND table_name   = 'agxx_last_modification_updater')""")
-            if table_exists[0]:
-                DatabaseUtils.execute(f"""
-                        UPDATE tww_cfg.agxx_last_modification_updater 
-                        SET ag_update_type = {self.mCbAg6496LastModification.itemData(agxx_lastmod_idx)}
-                        WHERE username ={DatabaseUtils.databaseConfig.PGUSER};""")
+
 
 
     @pyqtSlot()
