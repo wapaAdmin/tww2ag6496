@@ -186,13 +186,46 @@
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QCheckBox" name="mCbAg6496Extension">
-         <property name="toolTip">
-          <string>Enables the functionalities for AG-64 and AG-96 extensions.</string>
+		<widget class="QGroupBox" name="mGbAg6496">
+         <property name="title">
+          <string>AG64/96 functionalities</string>
          </property>
-         <property name="text">
-          <string>Enable AG-64 and AG-96 extensions</string>
-         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="mCbAg6496Extension">
+            <property name="toolTip">
+             <string>Enables the functionalities for AG-64 and AG-96 extensions.</string>
+            </property>
+            <property name="text">
+                <string>Enable AG-64 and AG-96 extensions</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="mCbAg6496LastModification">
+            <item>
+             <property name="text">
+              <string>WI</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>GEP</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Both</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item row="4" column="0">
