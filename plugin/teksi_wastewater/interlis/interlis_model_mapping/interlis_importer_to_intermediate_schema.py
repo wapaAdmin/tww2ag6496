@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_dirty
 from sqlalchemy.sql import text
 
+from ...utils.plugin_utils import logger
 from .. import config, utils
-from ..utils.various import logger
 
 
 class InterlisImporterToIntermediateSchema:
@@ -15,6 +15,7 @@ class InterlisImporterToIntermediateSchema:
         model_classes_tww_od,
         model_classes_tww_vl,
         callback_progress_done=None,
+        model_classes_tww_ag6496=None,
     ):
         self.model = model
         self.callback_progress_done = callback_progress_done
@@ -22,6 +23,7 @@ class InterlisImporterToIntermediateSchema:
         self.model_classes_interlis = model_classes_interlis
         self.model_classes_tww_od = model_classes_tww_od
         self.model_classes_tww_vl = model_classes_tww_vl
+        self.model_classes_tww_ag6496 = model_classes_tww_ag6496
 
         self.session_interlis = None
         self.session_tww = None
@@ -61,13 +63,21 @@ class InterlisImporterToIntermediateSchema:
         # Allow to insert rows with cyclic dependencies at once
         self.session_tww.execute(text("SET CONSTRAINTS ALL DEFERRED;"))
 
-        self._import_sia405_abwasser()
+        if self.model not in [config.MODEL_NAME_AG64, config.MODEL_NAME_AG96]:
+            self._import_sia405_abwasser()
 
         if self.model == config.MODEL_NAME_DSS:
             self._import_dss()
 
         if self.model == config.MODEL_NAME_VSA_KEK:
             self._import_vsa_kek()
+    
+        if self.model == config.MODEL_NAME_AG96:
+            self._import_ag96()
+
+        if self.model == config.MODEL_NAME_AG64:
+            self._import_ag64()
+
 
         self.close_sessions(skip_closing_tww_session=skip_closing_tww_session)
 
@@ -364,6 +374,60 @@ class InterlisImporterToIntermediateSchema:
         self._import_datei()
         self._check_for_stop()
 
+    def _import_ag64(self):
+        logger.info("Importing ABWASSER.infrastrukturknoten -> TWW.gepknoten")
+        self._import_infrastrukturknoten()
+        self._check_for_stop()
+
+        logger.info("Importing ABWASSER.infrastrukturhaltung -> TWW.gephaltung")
+        self._import_infrastrukturhaltung()
+        self._check_for_stop()
+
+        logger.info(
+            "Importing ABWASSER.ueberlauf_foerderaggregat -> TWW.ueberlauf_foerderaggregat"
+        )
+        self._import_ueberlauf_foerderaggregat_ag64()
+        self._check_for_stop()
+
+    def _import_ag96(self):
+        logger.info("Importing ABWASSER.gepmassnahme -> TWW.gepmassnahme")
+        self._import_gepmassnahme()
+        self._check_for_stop()
+
+        logger.info("Importing ABWASSER.gepknoten -> TWW.gepknoten")
+        self._import_gepknoten()
+        self._check_for_stop()
+
+        logger.info("Importing ABWASSER.gephaltung -> TWW.gephaltung")
+        self._import_gephaltung()
+        self._check_for_stop()
+
+        logger.info("Importing ABWASSER.einzugsgebiet -> TWW.einzugsgebiet")
+        self._import_einzugsgebiet()
+        self._check_for_stop()
+
+        logger.info(
+            "Importing ABWASSER.bautenausserhalbbaugebiet -> TWW.bautenausserhalbbaugebiet"
+        )
+        self._import_bautenausserhalbbaugebiet()
+        self._check_for_stop()
+
+        logger.info(
+            "Importing ABWASSER.ueberlauf_foerderaggregat -> TWW.ueberlauf_foerderaggregat"
+        )
+        self._import_ueberlauf_foerderaggregat_ag96()
+        self._check_for_stop()
+
+        logger.info("Importing ABWASSER.sbw_einzugsgebiet -> TWW.sbw_einzugsgebiet")
+        self._import_sbw_einzugsgebiet()
+        self._check_for_stop()
+
+        logger.info(
+            "Importing ABWASSER.versickerungsbereichag -> TWW.versickerungsbereichag"
+        )
+        self._import_versickerungsbereichag()
+        self._check_for_stop()
+
     def close_sessions(self, skip_closing_tww_session=False):
         # Calling the precommit callback if provided, allowing to filter before final import
         if not skip_closing_tww_session:
@@ -400,7 +464,7 @@ class InterlisImporterToIntermediateSchema:
         """
         if relation is None:
             return None
-        return relation.t_ili_tid
+        return relation.t_ili_tid if relation.t_ili_tid  else relation.obj_id # if else needed for AG-64/AG-96
 
     def create_or_update(self, cls, **kwargs):
         """
@@ -445,6 +509,10 @@ class InterlisImporterToIntermediateSchema:
             ),
             "contract_section": row.baulos,
             "detail_geometry3d_geometry": ST_Force3D(row.detailgeometrie),
+            # TODO : NOT MAPPED VSA-DSS 3D
+            # "elevation_determination": self.get_vl_code(
+            #    self.model_classes_tww_od.wastewater_structure_elevation_determination, row.hoehenbestimmung
+            # ),
             "financing": self.get_vl_code(
                 self.model_classes_tww_od.wastewater_structure_financing, row.finanzierung
             ),
@@ -678,7 +746,8 @@ class InterlisImporterToIntermediateSchema:
                     self.model_classes_tww_od.discharge_point_relevance, row.relevanz
                 ),
                 terrain_level=row.terrainkote,
-                # upper_elevation=row.REPLACE_ME, # TODO : NOT MAPPED
+                # TODO : NOT MAPPED VSA-DSS 3D
+                # upper_elevation=row.deckenkote,
                 waterlevel_hydraulic=row.wasserspiegel_hydraulik,
             )
             self.session_tww.add(discharge_point)
@@ -706,7 +775,8 @@ class InterlisImporterToIntermediateSchema:
                     self.model_classes_tww_od.special_structure_stormwater_tank_arrangement,
                     row.regenbecken_anordnung,
                 ),
-                # upper_elevation=row.REPLACE_ME,   # TODO : NOT MAPPED
+                # TODO : NOT MAPPED VSA-DSS 3D
+                # upper_elevation=row.deckenkote,
             )
             self.session_tww.add(special_structure)
             print(".", end="")
@@ -742,7 +812,8 @@ class InterlisImporterToIntermediateSchema:
                     self.model_classes_tww_od.infiltration_installation_seepage_utilization,
                     row.versickerungswasser,
                 ),
-                # upper_elevation=row.REPLACE_ME,  # TODO : NOT MAPPED
+                # TODO : NOT MAPPED VSA-DSS 3D
+                # upper_elevation=row.deckenkote,
                 vehicle_access=self.get_vl_code(
                     self.model_classes_tww_od.infiltration_installation_vehicle_access,
                     row.saugwagen,
@@ -1649,10 +1720,19 @@ class InterlisImporterToIntermediateSchema:
                 self.model_classes_tww_od.measuring_point,
                 **self.base_common(row),
                 # --- measuring_point ---
-                purpose=row.zweck,
+                # change to value list reference
+                # purpose=row.zweck,
+                purpose=self.get_vl_code(
+                    self.model_classes_tww_vl.measuring_point_purpose, row.zweck
+                ),
                 remark=row.bemerkung,
-                damming_device=row.staukoerper,
+                # change to value list reference
+                # damming_device=row.staukoerper,
+                damming_device=self.get_vl_code(
+                    self.model_classes_tww_vl.measuring_point_damming_device, row.staukoerper
+                ),
                 identifier=row.bezeichnung,
+                # kind is not a value list here
                 kind=row.art,
                 situation_geometry=row.lage,
                 fk_operator=row.betreiberref,
@@ -1907,7 +1987,10 @@ class InterlisImporterToIntermediateSchema:
                 # --- reach ---
                 clear_height=row.lichte_hoehe,
                 coefficient_of_friction=row.reibungsbeiwert,
-                # elevation_determination=self.get_vl_code(TWW.reach_elevation_determination, row.REPLACE_ME),  # TODO : NOT MAPPED
+                # TODO : NOT MAPPED VSA-DSS 3D
+                # self.get_vl_code(
+                #    self.model_classes_tww_od.wastewater_structure_elevation_determination, row.hoehenbestimmung
+                # ),
                 fk_pipe_profile=self.get_pk(row.rohrprofilref__REL),
                 fk_reach_point_from=self.get_pk(row.vonhaltungspunktref__REL),
                 fk_reach_point_to=self.get_pk(row.nachhaltungspunktref__REL),
@@ -2035,21 +2118,18 @@ class InterlisImporterToIntermediateSchema:
 
     def _import_untersuchung(self):
         for row in self.session_interlis.query(self.model_classes_interlis.untersuchung):
-            logger.warning(
-                "TWW examination.active_zone has no equivalent in the interlis model. This field will be null."
-            )
             examination = self.create_or_update(
                 self.model_classes_tww_od.examination,
                 **self.base_common(row),
                 # --- maintenance_event ---
-                # active_zone=row.REPLACE_ME,  # TODO : found no matching field for this in interlis, confirm this is ok
                 base_data=row.datengrundlage,
                 cost=row.kosten,
                 data_details=row.detaildaten,
                 duration=row.dauer,
-                fk_operating_company=(
-                    row.ausfuehrende_firmaref if row.ausfuehrende_firmaref else None
-                ),
+                # in VSA-KEK 2020 in class maintenance_event instead of examination
+                # fk_operating_company=(
+                #    row.ausfuehrende_firmaref if row.ausfuehrende_firmaref else None
+                # ),
                 identifier=row.bezeichnung,
                 operator=row.ausfuehrender,
                 reason=row.grund,
@@ -2100,7 +2180,9 @@ class InterlisImporterToIntermediateSchema:
                 self.model_classes_tww_od.damage_manhole,
                 **self.base_common(row),
                 # --- damage ---
+                # to check Adaption VSA-KEK 2020 moved to superclass schaden
                 comments=row.anmerkung,
+                # to check Adaption VSA-KEK 2020 moved to superclass schaden
                 connection=self.get_vl_code(
                     self.model_classes_tww_vl.damage_connection, row.verbindung
                 ),
@@ -2111,10 +2193,13 @@ class InterlisImporterToIntermediateSchema:
                 fk_examination=self.get_pk(row.untersuchungref__REL),
                 manhole_quantification1=row.quantifizierung1,
                 manhole_quantification2=row.quantifizierung2,
+                # to check Adaption VSA-KEK 2020 moved to superclass schaden
                 single_damage_class=self.get_vl_code(
                     self.model_classes_tww_od.damage_single_damage_class, row.einzelschadenklasse
                 ),
+                # to check Adaption VSA-KEK 2020 moved to superclass schaden
                 video_counter=row.videozaehlerstand,
+                # to check Adaption VSA-KEK 2020 moved to superclass schaden
                 view_parameters=row.ansichtsparameter,
                 # --- damage_manhole ---
                 manhole_damage_code=self.get_vl_code(
@@ -2194,6 +2279,322 @@ class InterlisImporterToIntermediateSchema:
             )
 
             self.session_tww.add(file_table_row)
+            print(".", end="")
+
+    ###################
+    ### AG-64/AG-96 ###
+    ###################
+
+    def base_common_ag_xx(self, row):
+        return {
+            "obj_id": row.t_ili_tid if row.t_ili_tid else row.obj_id, # AG-64 loads no t_ili_tid, AG-96 loads no obj_id
+            "bezeichnung": row.bezeichnung,
+        }
+
+    def base_common_ag64(self, row):
+        """
+        Returns common attributes for base
+        """
+        return {
+            "letzte_aenderung_wi": row.letzte_aenderung_wi,
+            "datenbewirtschafter_wi": self.get_pk(row.datenbewirtschafter_wi__REL),
+            "bemerkung_wi": row.bemerkung_wi,
+        }
+        
+    def gep_metainformation_common_ag_xx(self, row):
+        """
+        Returns common attributes for base
+        """
+        return {
+            "letzte_aenderung_gep": row.letzte_aenderung_gep,
+            "datenbewirtschafter_gep": self.get_pk(row.datenbewirtschafter_gep__REL),
+            "bemerkung_gep": row.bemerkung_gep,
+        }
+ 
+    def knoten_common_ag_xx(self, row):
+        """
+        Returns common attributes for wastewater_structure
+        """
+        return {
+            **self.base_common_ag_xx(row),
+            **self.base_common_ag64(row),
+            "ara_nr":  row.ara_nr,
+            "baujahr": row.baujahr,
+            "baulicherzustand": row.baulicherzustand,
+            "bauwerkstatus": row.bauwerkstatus,
+            "deckelkote": row.deckelkote,
+            "detailgeometrie": row.detailgeometrie,
+            "finanzierung": row.finanzierung,
+            "funktionag": row.funktionag,
+            "funktionhierarchisch": row.funktionhierarchisch,
+            "jahr_zustandserhebung": row.jahr_zustandserhebung,
+            "lage": row.lage,
+            "lagegenauigkeit": row.lagegenauigkeit,
+            "sanierungsbedarf": row.sanierungsbedarf,
+            "sohlenkote": row.sohlenkote,
+            "zugaenglichkeit": row.zugaenglichkeit,
+            "betreiber":self.get_pk(row.betreiber__REL),
+            "eigentuemer": self.get_pk(row.eigentuemer__REL),
+        }
+
+    def haltung_common_ag_xx(self, row):
+        """
+        Returns common attributes for wastewater_structure
+        """
+        return {
+            **self.base_common_ag_xx(row),
+            **self.base_common_ag64(row),
+            "baujahr": row.baujahr,
+            "baulicherzustand": row.baulicherzustand,
+            "bauwerkstatus": row.bauwerkstatus,
+            "finanzierung": row.finanzierung,
+            "funktionhierarchisch": row.funktionhierarchisch,
+            "funktionhydraulisch": row.funktionhydraulisch,
+            "hoehengenauigkeit_von": row.hoehengenauigkeit_von,
+            "hoehengenauigkeit_nach": row.hoehengenauigkeit_nach,
+            "jahr_zustandserhebung": row.jahr_zustandserhebung,
+            "kote_beginn": row.kote_beginn,
+            "kote_ende": row.kote_ende,
+            "laengeeffektiv": row.laengeeffektiv,
+            "material": row.material,
+            "nutzungsartag_ist": row.nutzungsartag_ist,
+            "reliner_art": row.reliner_art,
+            "reliner_bautechnik": row.reliner_bautechnik,
+            "sanierungsbedarf": row.sanierungsbedarf,
+            "verlauf": row.verlauf,
+            "wbw_basisjahr": row.wbw_basisjahr,
+            "wiederbeschaffungswert": row.wiederbeschaffungswert,
+            "betreiber":self.get_pk(row.betreiber__REL),
+            "eigentuemer": self.get_pk(row.eigentuemer__REL),
+            "startknoten":self.get_pk(row.startknoten__REL),
+            "endknoten": self.get_pk(row.endknoten__REL),
+        }
+
+    def ueberlauf_foerderaggregat_common_ag_xx(self, row):
+        """
+        Returns common attributes for ueberlauf_foerderaggregat
+        """
+        return {
+            **self.base_common_ag_xx(row),
+            "art": row.art,
+            "knotenref": self.get_pk(row.knotenref__REL),
+            "knoten_nachref": self.get_pk(row.knoten_nachref__REL),
+        }
+
+    def _import_gepmassnahme(self):
+        query = self.session_tww.query(self.model_classes_interlis.gepmassnahme)
+        for row in query:
+            gepmassnahme = self.model_classes_tww_ag6496.gepmassnahme(
+                **self.base_common_ag_xx(row),
+                **self.gep_metainformation_common_ag_xx(row),
+                ausdehnung=row.ausdehnung,
+                beschreibung=row.beschreibung,
+                datum_eingang=row.datum_eingang,
+                gesamtkosten=row.gesamtkosten,
+                handlungsbedarf=row.handlungsbedarf,
+                jahr_umsetzung_effektiv=row.jahr_umsetzung_effektiv,
+                jahr_umsetzung_geplant=row.jahr_umsetzung_planned,
+                kategorie=row.kategorie,
+                perimeter=row.perimeter,
+                prioritaetag=row.prioritaetag,
+                astatus=row.status,
+                symbolpos=row.symbolpos,
+                verweis=row.verweis,
+                traegerschaft=self.get_pk(row.traegerschaft__REL),
+                verantwortlich_ausloesung=self.get_pk(
+                    row.verantwortlich_ausloesung__REL
+                ),
+            )
+            self.session_tww.add(gepmassnahme)
+            print(".", end="")
+
+    def _import_gepknoten(self):
+        query = self.session_tww.query(self.model_classes_interlis.abwasserbauwerk)# abwasserbauwerk wegen Kompatibiltät bei Label-Export
+        for row in query:
+            gepknoten = self.model_classes_tww_ag6496.gepknoten(  
+                **self.gep_metainformation_common_ag_xx(row),
+                **self.knoten_common_ag_xx(row),
+                istschnittstelle=row.istschnittstelle,
+                maxrueckstauhoehe=row.maxrueckstauhoehe,
+                gepmassnahmeref=self.get_pk(row.gepmassnahmeref__REL),
+            )
+            self.session_tww.add(gepknoten)
+            print(".", end="")
+
+
+    def _import_infrastrukturknoten(self):
+        query = self.session_tww.query(self.model_classes_interlis.abwasserbauwerk)# abwasserbauwerk wegen Kompatibiltät bei Label-Export
+        for row in query:
+            gepknoten = self.model_classes_tww_ag6496.gepknoten(  
+                **self.knoten_common_ag_xx(row),
+            )
+            self.session_tww.add(gepknoten)
+            print(".", end="")
+
+    def _import_gephaltung(self):
+        query = self.session_tww.query(self.model_classes_interlis.haltung)
+        for row in query:
+            gephaltung = self.model_classes_tww_ag6496.gephaltung(
+
+                **self.gep_metainformation_common_ag_xx(row),
+                **self.haltung_common_ag_xx(row),
+                gepmassnahmeref=self.get_pk(row.gepmassnahmeref__REL),
+                hydraulischebelastung=row.hydraulischebelastung,
+                lichte_breite_ist=row.lichte_breite_ist,
+                lichte_breite_geplant=row.lichte_breite_geplant,
+                lichte_hoehe_geplant=row.lichte_hoehe_geplant,
+                nutzungsartag_geplant=row.nutzungsartag_geplant,
+            )
+            self.session_tww.add(gephaltung)
+            print(".", end="")
+
+    def _import_infrastrukturhaltung(self):
+        query = self.session_tww.query(self.model_classes_interlis.haltung)
+        for row in query:
+            gephaltung = self.model_classes_tww_ag6496.gephaltung(
+                **self.haltung_common_ag_xx(row),
+                lichte_breite_ist=row.lichte_breite,
+            )
+            self.session_tww.add(gephaltung)
+            print(".", end="")
+
+    def _import_einzugsgebiet(self):
+        query = self.session_tww.query(self.model_classes_interlis.einzugsgebiet)
+        for row in query:
+            einzugsgebiet = self.model_classes_tww_ag6496.einzugsgebiet(
+                **self.base_common_ag_xx(row),
+                **self.gep_metainformation_common_ag_xx(row),
+                abflussbegrenzung_geplant=row.abflussbegrenzung_geplant,
+                abflussbegrenzung_ist=row.abflussbegrenzung_ist,
+                abflussbeiwert_rw_geplant=row.abflussbeiwert_rw_geplant,
+                abflussbeiwert_rw_ist=row.abflussbeiwert_rw_ist,
+                abflussbeiwert_sw_geplant=row.abflussbeiwert_sw_geplant,
+                abflussbeiwert_sw_ist=row.abflussbeiwert_sw_ist,
+                befestigungsgrad_rw_geplant=row.befestigungsgrad_rw_geplant,
+                befestigungsgrad_rw_ist=row.befestigungsgrad_rw_ist,
+                befestigungsgrad_sw_geplant=row.befestigungsgrad_sw_geplant,
+                befestigungsgrad_sw_ist=row.befestigungsgrad_sw_ist,
+                direkteinleitung_in_gewaesser_geplant=row.direkteinleitung_in_gewaesser_geplant,
+                direkteinleitung_in_gewaesser_ist=row.direkteinleitung_in_gewaesser_ist,
+                einwohnerdichte_geplant=row.einwohnerdichte_geplant,
+                einwohnerdichte_ist=row.einwohnerdichte_ist,
+                entwaesserungssystemag_geplant=row.entwaesserungssystemag_geplant,
+                entwaesserungssystemag_ist=row.entwaesserungssystemag_ist,
+                flaeche=row.flaeche,
+                fremdwasseranfall_geplant=row.fremdwasseranfall_geplant,
+                fremdwasseranfall_ist=row.fremdwasseranfall_ist,
+                perimeter=row.perimeter,
+                perimetertyp=row.perimetertyp,
+                retention_geplant=row.retention_geplant,
+                retention_ist=row.retention_ist,
+                schmutzabwasseranfall_geplant=row.schmutzabwasseranfall_geplant,
+                schmutzabwasseranfall_ist=row.schmutzabwasseranfall_ist,
+                versickerung_geplant=row.versickerung_geplant,
+                versickerung_ist=row.versickerung_ist,
+                gepknoten_rw_geplantref=self.get_pk(
+                    row.gepknoten_rw_geplantref__REL
+                ),
+                gepknoten_rw_istref=self.get_pk(row.gepknoten_rw_istref__REL),
+                gepknoten_sw_geplantref=self.get_pk(
+                    row.gepknoten_sw_geplantref__REL
+                ),
+                gepknoten_sw_istref=self.get_pk(row.gepknoten_sw_istref__REL),
+            )
+            self.session_tww.add(einzugsgebiet)
+            print(".", end="")
+
+    def _import_bautenausserhalbbaugebiet(self):
+        query = self.session_tww.query(
+            self.model_classes_interlis.bautenausserhalbbaugebiet
+        )
+        for row in query:
+            bautenausserhalbbaugebiet = self.model_classes_tww_ag6496.bautenausserhalbbaugebiet(
+                **self.base_common_ag_xx(row),
+                **self.gep_metainformation_common_ag_xx(row),
+                anzstaendigeeinwohner=row.anzstaendigeeinwohner,
+                arealnutzung=row.arealnutzung,
+                beseitigung_haeusliches_abwasser=row.beseitigung_haeusliches_abwasser,
+                beseitigung_gewerbliches_abwasser=row.beseitigung_gewerbliches_abwasser,
+                beseitigung_platzentwaesserung=row.beseitigung_platzentwaesserung,
+                beseitigung_dachentwaesserung=row.beseitigung_dachentwaesserung,
+                eigentuemeradresse=row.eigentuemeradresse,
+                eigentuemername=row.eigentuemername,
+                einwohnergleichwert=row.einwohnergleichwert,
+                lage=row.lage,
+                nummer=row.nummer,
+                sanierungsbedarf=row.sanierungsbedarf,
+                sanierungsdatum=row.sanierungsdatum,
+                sanierungskonzept=row.sanierungskonzept,
+            )
+            self.session_tww.add(bautenausserhalbbaugebiet)
+            print(".", end="")
+
+    def _import_ueberlauf_foerderaggregat_ag96(self):
+        query = self.session_tww.query(self.model_classes_interlis.ueberlauf_foerderaggregat)
+        for row in query:
+            ueberlauf_foerderaggregat = (
+                self.model_classes_tww_ag6496.ueberlauf_foerderaggregat(
+                    **self.gep_metainformation_common_ag_xx(row),
+                    **self.ueberlauf_foerderaggregat_common_ag_xx(row),
+                )
+            )
+            self.session_tww.add(ueberlauf_foerderaggregat)
+            print(".", end="")
+
+    def _import_ueberlauf_foerderaggregat_ag64(self):
+        query = self.session_tww.query(self.model_classes_interlis.ueberlauf_foerderaggregat)
+        for row in query:
+            ueberlauf_foerderaggregat = (
+                self.model_classes_tww_ag6496.ueberlauf_foerderaggregat(
+                    **self.ueberlauf_foerderaggregat_common_ag_xx(row),
+                )
+            )
+            self.session_tww.add(ueberlauf_foerderaggregat)
+            print(".", end="")
+        logger.info("done")
+
+    def _import_sbw_einzugsgebiet(self):
+        query = self.session_tww.query(self.model_classes_interlis.sbw_einzugsgebiet)
+        for row in query:
+            sbw_einzugsgebiet = self.model_classes_tww_ag6496.sbw_einzugsgebiet(
+                **self.base_common_ag_xx(row),
+                **self.gep_metainformation_common_ag_xx(row),
+                einwohner_geplant=row.einwohner_geplant,
+                einwohner_ist=row.einwohner_ist,
+                flaeche_geplant=row.flaeche_geplant,
+                flaeche_ist=row.flaeche_ist,
+                flaeche_befestigt_geplant=row.flaeche_befestigt_geplant,
+                flaeche_befestigt_ist=row.flaeche_befestigt_ist,
+                flaeche_reduziert_geplant=row.flaeche_reduziert_geplant,
+                flaeche_reduziert_ist=row.flaeche_reduziert_ist,
+                fremdwasseranfall_geplant=row.fremdwasseranfall_geplant,
+                fremdwasseranfall_ist=row.fremdwasseranfall_ist,
+                perimeter_ist=row.perimeter_ist,
+                schmutzabwasseranfall_geplant=row.schmutzabwasseranfall_geplant,
+                schmutzabwasseranfall_ist=row.schmutzabwasseranfall_ist,
+                einleitstelleref=self.get_pk(row.einleitstelleref__REL),
+                sonderbauwerk_ref=self.get_pk(row.sonderbauwerk_ref__REL),
+            )
+            self.session_tww.add(sbw_einzugsgebiet)
+            print(".", end="")
+
+    def _import_versickerungsbereichag(self):
+        query = self.session_tww.query(
+            self.model_classes_interlis.versickerungsbereichag
+        )
+        for row in query:
+            versickerungsbereichag = self.model_classes_tww_ag6496.versickerungsbereichag(
+                # --- abwasserbauwerk ---
+                **self.base_common_ag_xx(row),
+                **self.gep_metainformation_common_ag_xx(row),
+                durchlaessigkeit=row.durchlaessigkeit,
+                einschraenkung=row.einschraenkung,
+                maechtigkeit=row.maechtigkeit,
+                perimeter=row.perimeter,
+                q_check=row.q_check,
+                versickerungsmoeglichkeitag=row.versickerungsmoeglichkeitag,
+            )
+            self.session_tww.add(versickerungsbereichag)
             print(".", end="")
 
     def _check_for_stop(self):
