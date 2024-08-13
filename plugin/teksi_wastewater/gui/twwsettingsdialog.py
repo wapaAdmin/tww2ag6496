@@ -32,6 +32,7 @@ from qgis.PyQt.QtSql import QSqlDatabase, QSqlQuery
 
 from ..utils import get_ui_class
 from teksi_wastewater.utils.database_utils import DatabaseUtils
+from teksi_wastewater.utils.twwlayermanager import TwwLayerManager
 
 DIALOG_UI = get_ui_class("twwsettingsdialog.ui")
 
@@ -115,36 +116,52 @@ class TwwSettingsDialog(QDialog, DIALOG_UI):
             self.mCbAg6496LastModification.setCurrentIndex(self.mCbAg6496LastModification.findText(default))
         self.execAG64LastModificationCombobox('init')
 
+    def _configure_database_connection_config_from_tww_layer(self):
+        """Configures tww2ili using the currently loaded TWW project layer"""
+
+        pg_layer = TwwLayerManager.layer("vw_tww_wastewater_structure")
+        if pg_layer:
+            DatabaseUtils.databaseConfig.PGSERVICE = pg_layer.dataProvider().uri().service()
+            DatabaseUtils.databaseConfig.PGHOST = pg_layer.dataProvider().uri().host()
+            DatabaseUtils.databaseConfig.PGPORT = pg_layer.dataProvider().uri().port()
+            DatabaseUtils.databaseConfig.PGDATABASE = pg_layer.dataProvider().uri().database()
+            DatabaseUtils.databaseConfig.PGUSER = pg_layer.dataProvider().uri().username()
+            DatabaseUtils.databaseConfig.PGPASS = pg_layer.dataProvider().uri().password()
+            return True
+        else:
+            return False
+
                 
     def execAG64LastModificationCombobox(self,flag: str):
         idx = self.mCbAg6496LastModification.currentIndex()
         if self.mCbAg6496Extension.isChecked(): # use if clause to not trigger any db calls on startup unless necessary
-            _ = DatabaseUtils.get_pgconf_from_tww_layer("vw_tww_wastewater_structure")
-            pgconf = DatabaseUtils.get_pgconf()
-            table_exists = DatabaseUtils.fetchone("""SELECT EXISTS( SELECT 1 FROM information_schema.tables 
-                    WHERE  table_schema = 'tww_cfg'
-                    AND table_name   = 'agxx_last_modification_updater')""")
-            if table_exists:
-                agxx_last_mod_setting = DatabaseUtils.fetchone(f"""
-                SELECT ag_update_type 
-                FROM tww_cfg.agxx_last_modification_updater
-                WHERE username='{pgconf["user"]}';
-                """)
-                if agxx_last_mod_setting:
-                    if flag == 'init':
-                        idx = self.mCbAg6496LastModification.findText(agxx_last_mod_setting[0])
-                        if idx != -1:
-                            self.mCbAg6496LastModification.setCurrentIndex(idx)
-                    elif flag == 'update':
+            conn_exists = self._configure_database_connection_config_from_tww_layer()
+            if conn_exists:
+                pgconf = DatabaseUtils.get_pgconf()
+                table_exists = DatabaseUtils.fetchone("""SELECT EXISTS( SELECT 1 FROM information_schema.tables 
+                        WHERE  table_schema = 'tww_cfg'
+                        AND table_name   = 'agxx_last_modification_updater')""")
+                if table_exists:
+                    agxx_last_mod_setting = DatabaseUtils.fetchone(f"""
+                    SELECT ag_update_type 
+                    FROM tww_cfg.agxx_last_modification_updater
+                    WHERE username='{pgconf["user"]}';
+                    """)
+                    if agxx_last_mod_setting:
+                        if flag == 'init':
+                            idx = self.mCbAg6496LastModification.findText(agxx_last_mod_setting[0])
+                            if idx != -1:
+                                self.mCbAg6496LastModification.setCurrentIndex(idx)
+                        elif flag == 'update':
+                            DatabaseUtils.execute(f"""
+                            UPDATE tww_cfg.agxx_last_modification_updater 
+                            SET ag_update_type = '{self.mCbAg6496LastModification.currentText()}'
+                            WHERE username ='{pgconf["user"]}';""")
+                    else:
                         DatabaseUtils.execute(f"""
-                        UPDATE tww_cfg.agxx_last_modification_updater 
-                        SET ag_update_type = '{self.mCbAg6496LastModification.currentText()}'
-                        WHERE username ='{pgconf["user"]}';""")
-                else:
-                    DatabaseUtils.execute(f"""
-                    INSERT INTO tww_cfg.agxx_last_modification_updater (username, ag_update_type)
-                    VALUES ('{pgconf["user"]}','{default}')
-                    ;""")
+                        INSERT INTO tww_cfg.agxx_last_modification_updater (username, ag_update_type)
+                        VALUES ('{pgconf["user"]}','{default}')
+                        ;""")
 
 
     @pyqtSlot()
